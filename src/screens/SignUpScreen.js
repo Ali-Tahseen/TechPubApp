@@ -66,6 +66,7 @@ export default function SignUpScreen({ navigation }) {
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
+        placeholderTextColor="#666" // Darker placeholder text color
       />
       <TextInput
         style={styles.input}
@@ -74,6 +75,7 @@ export default function SignUpScreen({ navigation }) {
         onChangeText={setPassword}
         secureTextEntry
         autoCapitalize="none"
+        placeholderTextColor="#666" // Darker placeholder text color
       />
       <TextInput
         style={styles.input}
@@ -82,6 +84,7 @@ export default function SignUpScreen({ navigation }) {
         onChangeText={setConfirmPassword}
         secureTextEntry
         autoCapitalize="none"
+        placeholderTextColor="#666" // Darker placeholder text color
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Button title="Sign Up" onPress={handleSignUp} />
@@ -94,6 +97,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 16,
+    backgroundColor: '#fff', // Ensure background is set to avoid any unexpected overlays
   },
   header: {
     fontSize: 24,
@@ -106,6 +110,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 8,
+    backgroundColor: '#fff', // Set background color to ensure visibility
   },
   error: {
     color: 'red',

@@ -25,7 +25,21 @@ export default function LoginScreen({ navigation }) {
         if (!userData.avatarCreated) {
           navigation.navigate('CreateAvatar');
         } else {
-          navigation.navigate('Home'); // Make sure 'Home' is also registered in the navigator
+          const dogID = userData.dogID; // Use dogID instead of dogName
+          if (dogID) {
+            const dogDocRef = doc(db, 'users', user.uid, 'dogs', dogID);
+            const dogDoc = await getDoc(dogDocRef);
+            if (dogDoc.exists()) {
+              const dogData = dogDoc.data();
+              navigation.navigate('Home', { ...dogData });
+            } else {
+              Alert.alert('Dog Data Not Found', 'No dog data found, please create a profile.');
+              navigation.navigate('CreateAvatar');
+            }
+          } else {
+            Alert.alert('Dog Data Not Found', 'No dog data found, please create a profile.');
+            navigation.navigate('CreateAvatar');
+          }
         }
       } else {
         Alert.alert('User Data Not Found', 'No user data found, please contact support.');
@@ -45,6 +59,11 @@ export default function LoginScreen({ navigation }) {
     navigation.navigate('TrainVideos');
   };
 
+  const handleForgotPassword = () => {
+    // Navigate to the Home screen with a default dogName for now
+    navigation.navigate('Home', { dogName: 'DefaultDog' });
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Welcome to TechPub</Text>
@@ -55,6 +74,7 @@ export default function LoginScreen({ navigation }) {
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
+        placeholderTextColor="#666"
       />
       <TextInput
         style={styles.input}
@@ -63,10 +83,11 @@ export default function LoginScreen({ navigation }) {
         value={password}
         onChangeText={setPassword}
         autoCapitalize="none"
+        placeholderTextColor="#666"
       />
       <Button title="Log In" onPress={handleLogin} />
       <Button title="Sign Up" onPress={() => navigation.navigate('SignUp')} />
-      <Button title="Forgot Password?" onPress={() => { /* Handle forgot password */ }} />
+      <Button title="Forgot Password?" onPress={handleForgotPassword} />
       <Button title="Continue with Google" onPress={handleGoogleLogin} />
       <Button title="Continue with Facebook" onPress={handleFacebookLogin} />
     </View>

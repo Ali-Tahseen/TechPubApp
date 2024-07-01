@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Dropdown } from 'react-native-element-dropdown';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { doc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../functions/firebaseConfig';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
@@ -24,7 +24,7 @@ const heightUnitData = [
   { label: 'feet', value: 'feet' },
 ];
 
-function CreateAvatarScreen({ navigation }) {
+const EditProfileScreen = ({ navigation }) => {
   const [dogName, setDogName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState(null);
@@ -40,6 +40,43 @@ function CreateAvatarScreen({ navigation }) {
   const [behavior, setBehavior] = useState('');
   const [behaviors, setBehaviors] = useState([]);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchDogData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const dogID = userDocSnap.data().dogID;
+          if (dogID) {
+            const dogDocRef = doc(db, 'users', user.uid, 'dogs', dogID);
+            const dogDocSnap = await getDoc(dogDocRef);
+            if (dogDocSnap.exists()) {
+              const data = dogDocSnap.data();
+              setDogName(data.name);
+              setAge(data.age);
+              setGender(data.gender);
+              setBreed(data.breed);
+              const [weightValue, weightUnitValue] = data.weight.split(' ');
+              setWeight(weightValue);
+              setWeightUnit(weightUnitValue);
+              const [heightValue, heightUnitValue] = data.height.split(' ');
+              setHeight(heightValue);
+              setHeightUnit(heightUnitValue);
+              setLocation(data.location);
+              setFurColor(data.furColor);
+              setBehaviors(data.behaviors);
+              setAbout(data.about);
+              setPhoto(data.photo);
+            }
+          }
+        }
+      }
+    };
+
+    fetchDogData();
+  }, []);
 
   const handleAddBehavior = () => {
     if (behavior.trim() !== '' && behaviors.length < 5) {
@@ -67,11 +104,18 @@ function CreateAvatarScreen({ navigation }) {
     }
 
     const userDocRef = doc(db, 'users', user.uid);
-    const dogID = user.uid; // Use user ID as dogID for simplicity
+    const userDocSnap = await getDoc(userDocRef);
+    const dogID = userDocSnap.exists() ? userDocSnap.data().dogID : null;
+
+    if (!dogID) {
+      setError('Dog ID not found');
+      return;
+    }
+
     const dogDocRef = doc(db, 'users', user.uid, 'dogs', dogID);
 
     try {
-      await setDoc(dogDocRef, {
+      await updateDoc(dogDocRef, {
         name: dogName,
         age: age,
         gender: gender,
@@ -85,10 +129,8 @@ function CreateAvatarScreen({ navigation }) {
         photo: photo ? photo : ''
       });
 
-      await updateDoc(userDocRef, { avatarCreated: true, dogID: dogID });
-
-      Alert.alert('Profile Saved', 'Your dog\'s profile has been saved successfully.');
-      navigation.navigate('Home');
+      Alert.alert('Profile Updated', 'Your dog\'s profile has been updated successfully.');
+      navigation.goBack();
     } catch (error) {
       setError(error.message);
     }
@@ -109,7 +151,7 @@ function CreateAvatarScreen({ navigation }) {
 
   return (
     <KeyboardAwareScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Create Your Dog's Profile</Text>
+      <Text style={styles.header}>Edit Your Dog's Profile</Text>
       <TextInput
         style={styles.input}
         placeholder="Dog’s Name"
@@ -231,7 +273,7 @@ function CreateAvatarScreen({ navigation }) {
           <View key={index} style={styles.behaviorItem}>
             <Text>{item}</Text>
             <TouchableOpacity onPress={() => handleRemoveBehavior(index)} style={styles.removeButton}>
-              <AntDesign name="close" size={16} color="red" />
+              <AntDesign name="close" size={24} color="red" />
             </TouchableOpacity>
           </View>
         ))}
@@ -252,7 +294,7 @@ function CreateAvatarScreen({ navigation }) {
       <Button title="Save Profile" onPress={handleSaveProfile} />
     </KeyboardAwareScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -328,7 +370,6 @@ const styles = StyleSheet.create({
   behaviorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
   addButton: {
     backgroundColor: 'white',
@@ -358,4 +399,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateAvatarScreen;
+export default EditProfileScreen;
